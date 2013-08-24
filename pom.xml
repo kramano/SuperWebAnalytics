@@ -9,7 +9,8 @@
   <scm>
     <connection>scm:git:git://github.com/dkincaid/SuperWebAnalytics.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/dkincaid/SuperWebAnalytics.git</developerConnection>
-    <tag>50d8ae069a828b4ccc19624474ef39a240fe87ca</tag>
+    <tag>26a8983749cb9d22d354a2e560445c4ce17cc8c0
+</tag>
     <url>https://github.com/dkincaid/SuperWebAnalytics</url>
   </scm>
   <build>
@@ -48,16 +49,6 @@
               </sources>
             </configuration>
           </execution>
-          <execution>
-            <id>add-test-source</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>add-test-source</goal>
-            </goals>
-            <configuration>
-              <sources/>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
     </plugins>
@@ -65,9 +56,9 @@
   <repositories>
     <repository>
       <id>central</id>
-      <url>http://repo1.maven.org/maven2</url>
+      <url>http://repo1.maven.org/maven2/</url>
       <snapshots>
-        <enabled>true</enabled>
+        <enabled>false</enabled>
       </snapshots>
       <releases>
         <enabled>true</enabled>
@@ -83,12 +74,22 @@
         <enabled>true</enabled>
       </releases>
     </repository>
+    <repository>
+      <id>conjars</id>
+      <url>http://conjars.org/repo</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
   </repositories>
   <dependencies>
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
-      <version>1.4.0</version>
+      <version>1.5.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.thrift</groupId>
@@ -117,19 +118,51 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>cascading</groupId>
+      <artifactId>cascading-core</artifactId>
+      <version>2.1.6</version>
+    </dependency>
+    <dependency>
+      <groupId>cascading</groupId>
+      <artifactId>cascading-hadoop</artifactId>
+      <version>2.1.6</version>
+    </dependency>
+    <dependency>
       <groupId>backtype</groupId>
+      <artifactId>cascading-thrift</artifactId>
+      <version>0.2.5</version>
+    </dependency>
+    <dependency>
+      <groupId>com.backtype</groupId>
+      <artifactId>dfs-datastores</artifactId>
+      <version>1.3.4</version>
+    </dependency>
+    <dependency>
+      <groupId>com.backtype</groupId>
       <artifactId>dfs-datastores-cascading</artifactId>
-      <version>1.2.1</version>
+      <version>1.3.4</version>
     </dependency>
     <dependency>
       <groupId>cascalog</groupId>
       <artifactId>cascalog</artifactId>
-      <version>1.10.0</version>
+      <version>1.10.2</version>
     </dependency>
     <dependency>
       <groupId>com.clearspring.analytics</groupId>
       <artifactId>stream</artifactId>
       <version>2.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>tools.nrepl</artifactId>
+      <version>0.2.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>clojure-complete</groupId>
+      <artifactId>clojure-complete</artifactId>
+      <version>0.2.3</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testng</groupId>
@@ -146,7 +179,7 @@
     <dependency>
       <groupId>midje</groupId>
       <artifactId>midje</artifactId>
-      <version>1.4.0</version>
+      <version>1.5.1</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

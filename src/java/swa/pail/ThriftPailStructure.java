@@ -1,6 +1,6 @@
 package swa.pail;
 
-import backtype.hadoop.pail.PailStructure;
+import com.backtype.hadoop.pail.PailStructure;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;

@@ -1,15 +1,16 @@
 package swa;
 
-import backtype.cascading.tap.PailTap;
-import backtype.hadoop.pail.Pail;
-import backtype.hadoop.pail.PailSpec;
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.tap.Tap;
 import cascalog.ops.IdentityBuffer;
 import cascalog.ops.RandLong;
+import clojure.lang.Keyword;
+import clojure.lang.PersistentStructMap;
+import com.backtype.cascading.tap.PailTap;
+import com.backtype.hadoop.pail.Pail;
+import com.backtype.hadoop.pail.PailSpec;
 import com.google.common.collect.Maps;
 import jcascalog.Api;
-import jcascalog.Fields;
 import jcascalog.Option;
 import jcascalog.Subquery;
 import jcascalog.op.Count;
@@ -20,7 +21,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import swa.cascalog.*;
 import swa.generated.DataUnit;
-import swa.pail.SplitDataPailStructureOld;
+import swa.pail.SplitDataPailStructure;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,8 +41,8 @@ public class Main {
     public static void main(String[] args) throws Exception {
         setUp();
 
-        Pail newDataPail = new Pail(NEW_DATA_LOCATION);
-        Pail masterPail = new Pail(MASTER_DATA_LOCATION);
+        Pail newDataPail = Pail.create(FileSystem.getLocal(new Configuration()), NEW_DATA_LOCATION, false);
+        Pail masterPail = Pail.create(FileSystem.getLocal(new Configuration()), MASTER_DATA_LOCATION, false);
 
         // Snapshot the new data swa.pail
         Pail snapshotPail = newDataPail.snapshot(SNAPSHOT_LOCATION);
@@ -153,31 +154,36 @@ public class Main {
         }
 
         Tap pageviews = attributeTap(NORMALIZED_URLS_LOCATION, DataUnit._Fields.PAGE_VIEW);
-        Tap newIds = (Tap) Api.hfsSeqfile("/tmp/swa/equivs" + i);
+        Tap newIds = hfsSeqfile("/tmp/swa/equivs" + i, "source");
         Tap result = splitDataTap(NORMALIZED_PAGEVIEW_LOCATION);
         Api.execute(result,
                 new Subquery("?normalized-pageview")
                         .predicate(newIds, "!!newId", "?person")
                         .predicate(pageviews, "_", "?data")
-                        .predicate(new ExtractPageViewFields(), "_", "?person", "_")
+                        .predicate(new ExtractPageViewFields(), "?data").out("_", "?person", "_")
                         .predicate(new MakeNormalizedPageview(), "!!newId", "?data").out("?normalized-pageview"));
     }
 
+    private static Tap hfsSeqfile(String fileName, String tapType) {
+        PersistentStructMap psm = (PersistentStructMap) Api.hfsSeqfile(fileName);
+        return (Tap) psm.get(Keyword.intern(tapType));
+    }
+
     private static Tap runUserIdNormalizationIteration(int i) {
-        Tap source = (Tap) Api.hfsSeqfile("/tmp/swa/equivs" + (i - 1));
-        Tap sink = (Tap) Api.hfsSeqfile("/tmp/swa/equivs" + i);
+        Tap source = hfsSeqfile("/tmp/swa/equivs" + (i - 1), "source");
+        Tap sink = hfsSeqfile("/tmp/swa/equivs" + i, "sink");
         Subquery iteration = new Subquery("?b1", "?node1", "?node2", "?is-new")
                 .predicate(source, "?n1", "?n2")
                 .predicate(new BidirectionalEdge(), "?n1", "?n2").out("?b1", "?b2")
                 .predicate(new IterateEdges(), "?b2").out("?node1", "?node2", "?is-new");
-        iteration = (Subquery) Api.selectFields(iteration, new Fields("?node1", "?node2", "?is-new"));
+
         Subquery newEdgeSet = new Subquery("?node1", "?node2")
-                .predicate(iteration, "?node1", "?node2", "_")
+                .predicate(iteration, "_", "?node1", "?node2", "_")
                 .predicate(Option.DISTINCT, true);
 
         Api.execute(sink, newEdgeSet);
 
-        Tap progressEdgesSink = (Tap) Api.hfsSeqfile("/tmp/swa/equivs" + i + "-new");
+        Tap progressEdgesSink = hfsSeqfile("/tmp/swa/equivs" + i + "-new", "sink");
         Subquery progressEdges = new Subquery("?node1", "?node2")
                 .predicate(iteration, "?node1", "?node2", true);
 
@@ -225,7 +231,7 @@ public class Main {
 
     public static PailTap splitDataTap(String path) {
         PailTap.PailTapOptions opts = new PailTap.PailTapOptions();
-        opts.spec = new PailSpec(new SplitDataPailStructureOld());
+        opts.spec = new PailSpec(new SplitDataPailStructure());
         return new PailTap(path, opts);
     }
 
